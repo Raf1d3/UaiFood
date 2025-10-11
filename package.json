@@ -1,0 +1,20 @@
+{
+  "name": "uaifood",
+  "version": "1.0.0",
+  "description": "Projeto de DAW II de uma plataforma digital de venda de alimentos.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
