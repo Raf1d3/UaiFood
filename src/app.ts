@@ -3,11 +3,16 @@ import 'express-async-errors';
 import cors from 'cors';
 import router from './routes/index.js';
 
+import swaggerUI from 'swagger-ui-express';
+import swaggerDocs from './configs/swaggerConfig.js';
+
 const app: Express = express();
 
 app.use(cors());
 app.use(express.json());
 app.use(router);
+
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Bem vindos ao UaiFood!');

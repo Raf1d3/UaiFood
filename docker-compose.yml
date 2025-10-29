@@ -1,0 +1,42 @@
+services:
+  app:
+    container_name: appUaifood
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    command: >
+      sh -c "npm install && npx prisma generate && npm run dev"
+
+    ports:
+      - "3001:3000"
+      
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      
+    depends_on:
+      - db
+
+    volumes:
+      - ./:/app
+      - /app/node_modules
+
+  db:
+    image: postgres:16-alpine
+    container_name: Uaifood_db_postgres
+    restart: always
+    
+    # variáveis no arquivo .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      
+    ports:
+      - "${DB_PORT}:5432"
+      
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
