@@ -24,7 +24,7 @@ services:
   db:
     image: postgres:16-alpine
     container_name: Uaifood_db_postgres
-    restart: always
+    # restart: always
     
     # variáveis no arquivo .env
     environment:
@@ -38,5 +38,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7-alpine
+    container_name: Uaifood_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
 volumes:
   postgres_data:
+  redis_data:

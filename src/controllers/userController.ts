@@ -1,7 +1,9 @@
 import type { Request, Response } from "express";
 import { UserService } from "../services/userService.js";
-import type { RegisterUserDto } from "../services/dto/register-user.dto.js";
-import type { IUpdateUserDto } from "../services/dto/update-user.dto.js";
+import type {
+  RegisterUserDto,
+  IUpdateUserDto,
+} from "../services/dto/userDTOs.js";
 
 export class UserController {
   private static userService = new UserService();
@@ -34,11 +36,27 @@ export class UserController {
   static async login(req: Request, res: Response) {
     try {
       const { email, password } = req.body;
-      const token = await UserController.userService.authenticate({
+      const authPayload = await UserController.userService.authenticate({
         email,
         password,
       });
-      res.status(200).json({ token });
+      res.status(200).json(authPayload);
+    } catch (error: any) {
+      res.status(401).json({ error: (error as Error).message });
+    }
+  }
+
+  static async logout(req: Request, res: Response) {
+    try {
+      const authHeader = req.headers["authorization"];
+      const token = authHeader && authHeader.split(" ")[1];
+
+      if (!token) {
+        throw new Error("Token não fornecido.");
+      }
+
+      const result = await UserController.userService.logout(token);
+      res.status(200).json(result);
     } catch (error: any) {
       res.status(400).json({ error: (error as Error).message });
     }
@@ -47,21 +65,32 @@ export class UserController {
   static async deleteUser(req: Request, res: Response) {
     try {
       const { id } = req.params;
-
-      let userId: bigint;
+      const authenticatedUser = req.user;
 
       if (!id) {
         return res.status(400).json({ error: "ID do usuário é obrigatório" });
       }
+
+      let userIdToDelete: bigint;
+
       try {
-        userId = BigInt(id);
+        userIdToDelete = BigInt(id);
       } catch (error) {
         throw new Error("O ID do usuário é inválido ou mal formatado.");
       }
 
-      const result = await UserController.userService.deleteUser(userId);
+      const result = await UserController.userService.deleteUser(
+        userIdToDelete,
+        authenticatedUser
+      );
       res.status(200).json(result);
     } catch (error: any) {
+      if (error.message === "Usuario não encontrado") {
+        return res.status(404).json({ error: error.message });
+      }
+      if (error.message.startsWith("Acesso negado")) {
+        return res.status(403).json({ error: error.message });
+      }
       res.status(400).json({ error: (error as Error).message });
     }
   }
@@ -70,14 +99,16 @@ export class UserController {
     try {
       const { id } = req.params;
       const dataToUpdate: IUpdateUserDto = req.body;
-
-      let userId: bigint;
+      const authenticatedUser = req.user;
 
       if (!id) {
         return res.status(400).json({ error: "ID do usuário é obrigatório" });
       }
+
+      let userIdToUpdate: bigint;
+
       try {
-        userId = BigInt(id);
+        userIdToUpdate = BigInt(id);
       } catch (error) {
         throw new Error("O ID do usuário é inválido ou mal formatado.");
       }
@@ -87,13 +118,17 @@ export class UserController {
       }
 
       const updatedUser = await UserController.userService.updateProfile(
-        userId,
-        dataToUpdate
+        userIdToUpdate,
+        dataToUpdate,
+        authenticatedUser
       );
       res.status(200).json(updatedUser);
     } catch (error: any) {
       if (error.message === "Usuario não encontrado") {
         return res.status(404).json({ error: error.message });
+      }
+      if (error.message.startsWith("Acesso negado")) {
+        return res.status(403).json({ error: error.message });
       }
       res.status(400).json({ error: (error as Error).message });
     }
@@ -102,6 +137,7 @@ export class UserController {
   static async viewProfile(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const authenticatedUser = req.user;
 
       let userId: bigint;
 
@@ -114,7 +150,10 @@ export class UserController {
         throw new Error("O ID do usuário é inválido ou mal formatado.");
       }
 
-      const user = await UserController.userService.viewProfile(userId);
+      const user = await UserController.userService.viewProfile(
+        userId,
+        authenticatedUser
+      );
       res.status(200).json(user);
     } catch (error: any) {
       if (error.message === "Usuario não encontrado") {
@@ -132,5 +171,4 @@ export class UserController {
       res.status(400).json({ error: (error as Error).message });
     }
   }
-
 }

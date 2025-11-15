@@ -1,15 +1,17 @@
 import { hash, compare } from "bcryptjs";
 import { UserRepository } from "../repositories/userRepository.js";
 import { UserType, type Prisma, type User } from "@prisma/client";
-import type { RegisterUserDto } from "./dto/register-user.dto.js";
-import type { authenticateUserDto } from "./dto/auth-user.dto.js";
-import type { IUpdateUserDto } from "./dto/update-user.dto.js";
+import redisClient from "../configs/redis.client.js";
+import { generateToken, verifyToken } from "../configs/jwt.config.js";
+import type {
+  RegisterUserDto,
+  authenticateUserDto,
+  IUpdateUserDto,
+} from "./dto/userDTOs.js";
 
-//import { generateToken } from '../utils/jwt.ts';
-
-interface IAuthRequest {
-  email: string;
-  password: string;
+interface IAuthenticatedUser {
+  id: bigint;
+  role: UserType;
 }
 
 export class UserService {
@@ -36,11 +38,26 @@ export class UserService {
 
   async updateProfile(
     userId: bigint,
-    data: IUpdateUserDto
+    data: IUpdateUserDto,
+    authenticatedUser: IAuthenticatedUser
   ): Promise<Omit<User, "password">> {
     const user = await this.userRepository.findById(userId);
+
     if (!user) {
       throw new Error("Usuario não encontrado");
+    }
+
+    if (authenticatedUser.role == UserType.CLIENT) {
+      if (authenticatedUser.id != userId) {
+        throw new Error(
+          "Acesso negado. Você só pode atualizar seu próprio perfil."
+        );
+      }
+      if (data.userType && data.userType !== UserType.CLIENT) {
+        throw new Error(
+          "Acesso negado. Você não pode alterar seu próprio papel."
+        );
+      }
     }
 
     const dataToUpdate: Prisma.UserUpdateInput = {};
@@ -55,7 +72,10 @@ export class UserService {
       dataToUpdate.phone = data.phone;
     }
     if (data.birthDate) {
-      dataToUpdate.birthDate = new Date(data.birthDate); // Seguro, pois só executa se existir
+      dataToUpdate.birthDate = new Date(data.birthDate);
+    }
+    if (data.userType) {
+      dataToUpdate.userType = data.userType;
     }
 
     if (data.password && typeof data.password === "string") {
@@ -69,17 +89,40 @@ export class UserService {
     return safeUser;
   }
 
-  async deleteUser(userId: bigint): Promise<{ message: string }> {
+  async deleteUser(
+    userId: bigint,
+    authenticatedUser: IAuthenticatedUser
+  ): Promise<{ message: string }> {
     const user = await this.userRepository.findById(userId);
+
     if (!user) {
       throw new Error("Usuario não encontrado");
+    }
+
+    if (
+      authenticatedUser.role == UserType.CLIENT &&
+      authenticatedUser.id != userId
+    ) {
+      throw new Error(
+        "Acesso negado. Você só pode deletar seu próprio perfil."
+      );
     }
 
     await this.userRepository.delete(userId);
     return { message: "Usuario deletado com sucesso" };
   }
 
-  async viewProfile(userId: bigint): Promise<Omit<User, "password">> {
+  async viewProfile(
+    userId: bigint,
+    authenticatedUser: IAuthenticatedUser
+  ): Promise<Omit<User, "password">> {
+    if (
+      authenticatedUser.role == UserType.CLIENT &&
+      authenticatedUser.id != userId
+    ) {
+      throw new Error("Acesso negado. Você só pode ver seu próprio perfil.");
+    }
+
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new Error("Usuario não encontrado");
@@ -100,23 +143,35 @@ export class UserService {
     return users.map(({ password, ...safeUser }) => safeUser);
   }
 
-  async authenticate(data: authenticateUserDto): Promise<string> {
-    const user = (await this.userRepository.findByEmail(
-      data.email
-    )) as Prisma.UserCreateInput | null;
-    if (!user) {
+  async authenticate(data: authenticateUserDto): Promise<{user: Omit<User, 'password'>, token: string}> {
+    const user = await this.userRepository.findByEmail(data.email);
+    if (!user || !(await compare(data.password, user.password))) {
       throw new Error("Email ou senha inválidos");
     }
 
-    const passwordMatch = await compare(data.password, user.password);
+    const token = generateToken(user.id, user.userType);
+    const { password, ...safeUser } = user;
 
-    if (!passwordMatch) {
-      throw new Error("Email ou senha inválidos");
+    return { user: safeUser, token: token };
+  }
+
+  async logout(token: string): Promise<{ message: string }> {
+    try {
+      const payload = verifyToken(token);
+
+      const expiry = payload.exp as number;
+      const now = Math.floor(Date.now() / 1000);
+      const remainingTime = expiry - now;
+
+      if (remainingTime > 0) {
+        // 'SET' com 'EX' (expire)
+        await redisClient.set(token, "revoked", {
+          EX: remainingTime,
+        });
+      }
+      return { message: "Logout realizado com sucesso" };
+    } catch (error: any) {
+      throw new Error("Erro ao realizar logout: " + error.message);
     }
-
-    // Gerar o token JWT
-    //const token = generateToken({ userId: user.id });
-    const token = "a123";
-    return token;
   }
 }

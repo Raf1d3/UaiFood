@@ -1,50 +1,232 @@
 import { Router } from "express";
 import { UserController } from "../controllers/userController.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { checkRole } from "../middlewares/checkRole.middleware.js";
+import { UserType } from "@prisma/client";
 
 const userRouter = Router();
-
+// Rotas públicas
 userRouter.post("/register", UserController.register);
-
 userRouter.post("/login", UserController.login);
 
-userRouter.delete("/delete/:id", UserController.deleteUser);
+// Rotas autenticadas
+userRouter.post("/logout", authMiddleware, UserController.logout);
+userRouter.get("/user/:id", authMiddleware, UserController.viewProfile);
+userRouter.delete("/user/:id", authMiddleware, UserController.deleteUser);
+userRouter.put("/user/:id", authMiddleware, UserController.updateProfile);
 
-userRouter.put("/update/:id", UserController.updateProfile);
-
-userRouter.get("/profile/:id", UserController.viewProfile);
-
-userRouter.get("/all", UserController.listAllUsers);
+// Rota de Admin
+userRouter.get(
+  "/users",
+  authMiddleware,
+  checkRole([UserType.ADMIN]),
+  UserController.listAllUsers
+);
 
 /**
  * @swagger
- *   /usuarios:
- *       post:
- *           summary: Cria um novo usuário
- *           description: Adiciona um novo usuário ao sistema com base nas informações fornecidas.
- *           requestBody:
- *               required: true
- *               content:
- *                   application/json:
- *                       schema:
- *                           type: object
- *                           properties:
- *                               nome:
- *                                   type: string
- *                                   description: Nome do novo usuário
- *                               email:
- *                                   type: string
- *                                   description: E-mail do novo usuário
- *                           senha:
- *                               type: string
- *                               description: Senha do novo usuário
- *                           data_nascimento:
- *                               type: date
- *                               description: Data de nascimento do novo usuário
- *       responses:
- *           201:
- *               description: Usuário criado com sucesso.
- *           400:
- *               description: Falha ao criar o usuário.
+ * tags:
+ *   name: Users
+ *   description: Gerenciamento de usuários e autenticação
  */
+
+/**
+ * @swagger
+ * /register:
+ *   post:
+ *     summary: Registra um novo usuário
+ *     tags: [Users]
+ *     description: Cria um novo usuário padrão com o papel 'CLIENT'.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegisterUserDto'
+ *     responses:
+ *       '201':
+ *         description: Usuário criado com sucesso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       '400':
+ *         description: Dados invalidos #(ex: email ja existe, campos faltando).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Autentica um usuário
+ *     tags: [Users]
+ *     description: Faz o login com email e senha e retorna um token JWT e os dados do usuário.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AuthRequestDto'
+ *     responses:
+ *       '200':
+ *         description: Login bem-sucedido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       '401':
+ *         description: Credenciais inválidas.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
+/**
+ * @swagger
+ * /logout:
+ *   post:
+ *     summary: Faz logout do usuário (Requer autenticação)
+ *     tags: [Users]
+ *     description: Invalida o token JWT atual do usuário, adicionando-o à blacklist no Redis.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: Logout bem-sucedido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ *       '401':
+ *         description: Token não fornecido.
+ *       '403':
+ *         description: Token inválido ou revogado.
+ */
+
+/**
+ * @swagger
+ * /user/{id}:
+ *   get:
+ *     summary: Busca o perfil de um usuário (Requer autenticação)
+ *     tags: [Users]
+ *     description: CLIENTs só podem ver o próprio perfil. ADMINs podem ver qualquer perfil.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "1"
+ *         description: ID (BigInt) do usuário a ser visualizado.
+ *     responses:
+ *       '200':
+ *         description: Perfil do usuário.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       '401':
+ *         description: Token não fornecido.
+ *       '403':
+ *         description: Acesso negado (não é o dono nem ADMIN).
+ *       '404':
+ *         description: Usuário não encontrado.
+ *
+ *   put:
+ *     summary: Atualiza o perfil de um usuário (Requer autenticação)
+ *     tags: [Users]
+ *     description: CLIENTs só podem atualizar o próprio perfil. ADMINs podem atualizar qualquer perfil.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "1"
+ *         description: ID (BigInt) do usuário a ser atualizado.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUserDto'
+ *     responses:
+ *       '200':
+ *         description: Usuário atualizado com sucesso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       '400':
+ *         description: Dados inválidos ou ID mal formatado.
+ *       '401':
+ *         description: Token não fornecido.
+ *       '403':
+ *         description: Acesso negado (não é o dono nem ADMIN).
+ *       '404':
+ *         description: Usuário não encontrado.
+ *
+ *   delete:
+ *     summary: Deleta um usuário (Requer autenticação)
+ *     tags: [Users]
+ *     description: CLIENTs só podem deletar o próprio perfil. ADMINs podem deletar qualquer perfil.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "1"
+ *         description: ID (BigInt) do usuário a ser deletado.
+ *     responses:
+ *       '200':
+ *         description: Usuário deletado com sucesso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ *       '401':
+ *         description: Token não fornecido.
+ *       '403':
+ *         description: Acesso negado (não é o dono nem ADMIN).
+ *       '404':
+ *         description: Usuário não encontrado.
+ */
+
+/**
+ * @swagger
+ * /all:
+ *   get:
+ *     summary: Lista TODOS os usuários (Requer ADMIN)
+ *     tags: [Users]
+ *     description: Retorna uma lista completa de todos os usuários no sistema. Rota restrita a usuários com papel 'ADMIN'.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: Lista de usuários.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       '401':
+ *         description: Token não fornecido.
+ *       '403':
+ *         description: Acesso proibido. Rota de Admin.
+ */
+
 
 export default userRouter;
