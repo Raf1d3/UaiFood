@@ -5,22 +5,43 @@ import type { Prisma, Item } from "@prisma/client";
 
 export class ItemRepository {
     async findAll(): Promise<Item[]> {
-        return prisma.item.findMany();
+        return prisma.item.findMany({ include: { category: true } });
     }
 
     async countByCategoryId(categoryId: bigint): Promise<number> {
     return prisma.item.count({ where: { categoryId } });
     }
+    
+    async countOrderItems(itemId: bigint): Promise<number> {
+    return prisma.orderItem.count({
+      where: { itemId },
+    });
+    }
 
-    findAllByCategoryId(categoryId: bigint): Promise<Item[]> {
+    async findAllByCategoryId(categoryId: bigint): Promise<Item[]> {
         return prisma.item.findMany({
-            where: { categoryId }
+            where: { categoryId },
+            include: { category: true }
         })
+    }
+
+    async findByDescription(description: string): Promise<Item | null> {
+        return prisma.item.findFirst({
+            where: { description: { equals: description, mode: 'insensitive' } },
+            include: { category: true }
+        });
+    }
+
+    async findAllByInIds(ids: bigint[]): Promise<Item[]> {
+        return prisma.item.findMany({
+            where: { id: { in: ids } },
+        });
     }
 
     async findById(id: bigint): Promise<Item | null> {
         return prisma.item.findUnique({
             where: { id },
+            include: { category: true }
         });
     }
 

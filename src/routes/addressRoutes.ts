@@ -162,7 +162,7 @@ addressRouter.get('/',checkRole([UserType.ADMIN]), AddressController.listAll);
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/MessageResponse'
+ *               $ref: '#/components/schemas/DeleteAddressResponse'
  *       '401':
  *         description: Token não fornecido.
  *       '403':

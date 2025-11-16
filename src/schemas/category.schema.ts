@@ -11,7 +11,7 @@ export const updateCategorySchema = z.object({
   body: z.object({
     description: z.string().min(1, "Descrição é obrigatória").optional(),
   }).strict()
-}).extend(idParamsSchema);
+}).merge(idParamsSchema);
 
 
 export const categoryParamsSchema = idParamsSchema;

@@ -8,33 +8,44 @@ export class OrderRepository {
         return prisma.order.findMany();
     }
 
-    async findAllByUserId(clientId: bigint): Promise<Order[]> {
+    async findAllByUserId(userId: bigint): Promise<Order[]> {
         return prisma.order.findMany({
-            where: { clientId },
+            where: { clientId: userId },
+            include: {
+                items: { // Inclui os 'OrderItems'
+                    include: {
+                        item: true, // Inclui os detalhes do 'Item' (nome, preço)
+                    },
+                },
+                client: true, // Inclui os dados do cliente
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
         });
     }
 
     async findById(id: bigint): Promise<Order | null> {
         return prisma.order.findUnique({
             where: { id },
+            include: {
+                    items: {
+                        include: {
+                            item: true,
+                    },
+                },
+                client: {
+                    select: { id: true, name: true, email: true }
+                }
+            },
         });
     }
 
-    async update(id: bigint, data: Prisma.OrderItemUpdateInput): Promise<Order> {
-        return prisma.order.update({
-            where: { id },
-            data,
-        });
-    }
-
-    async delete(id: bigint): Promise<void> {
-        await prisma.order.delete({
-            where: { id },
-        });
-    }
-
-    async create(data: Prisma.OrderCreateInput): Promise<Order> {
-        return prisma.order.create({
+    async create(
+        data: Prisma.OrderCreateInput, 
+        tx: Prisma.TransactionClient
+    ): Promise<Order> {
+        return tx.order.create({
             data,
         });
     }

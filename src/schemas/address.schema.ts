@@ -21,7 +21,7 @@ export const createAddressSchema = z.object({
       .min(1, { message: "CEP é obrigatório" })
       .max(10, { message: "CEP deve ter no máximo 10 caracteres" }),
   }).strict() // Não permite campos extras no body
-}).extend(idParamsSchema);
+}).merge(idParamsSchema);
 
 export const updateAddressSchema = z.object({
   body: z.object({
@@ -49,7 +49,7 @@ export const updateAddressSchema = z.object({
       .max(10, { message: "CEP deve ter no máximo 10 caracteres" })
       .optional(),
   }).strict() // Não permite campos extras no body
-}).extend(idParamsSchema);
+}).merge(idParamsSchema);
 
 export const deleteAddressSchema = idParamsSchema;
 export const findAddressSchema = idParamsSchema;

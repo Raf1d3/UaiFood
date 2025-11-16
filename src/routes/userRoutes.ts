@@ -203,7 +203,7 @@ userRouter.get(
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/MessageResponse'
+ *               $ref: '#/components/schemas/DeleteUserResponse'
  *       '401':
  *         description: Token não fornecido.
  *       '403':
