@@ -3,17 +3,25 @@ import { UserController } from "../controllers/userController.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { checkRole } from "../middlewares/checkRole.middleware.js";
 import { UserType } from "@prisma/client";
+import { validate } from '../middlewares/validate.middleware.js';
+import { 
+  registerUserSchema, 
+  loginUserSchema, 
+  updateUserSchema,
+  deleteUserSchema,
+  viewProfileSchema
+} from '../schemas/user.schema.js';
 
 const userRouter = Router();
 // Rotas públicas
-userRouter.post("/register", UserController.register);
-userRouter.post("/login", UserController.login);
+userRouter.post("/register", validate(registerUserSchema), UserController.register);
+userRouter.post("/login", validate(loginUserSchema), UserController.login);
 
 // Rotas autenticadas
 userRouter.post("/logout", authMiddleware, UserController.logout);
-userRouter.get("/user/:id", authMiddleware, UserController.viewProfile);
-userRouter.delete("/user/:id", authMiddleware, UserController.deleteUser);
-userRouter.put("/user/:id", authMiddleware, UserController.updateProfile);
+userRouter.get("/user/:id", validate(viewProfileSchema), authMiddleware, UserController.viewProfile);
+userRouter.delete("/user/:id", validate(deleteUserSchema), authMiddleware, UserController.deleteUser);
+userRouter.put("/user/:id", validate(updateUserSchema), authMiddleware, UserController.updateProfile);
 
 // Rota de Admin
 userRouter.get(

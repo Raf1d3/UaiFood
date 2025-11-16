@@ -1,30 +1,14 @@
 import type { Request, Response } from "express";
 import { UserService } from "../services/userService.js";
-import type {
-  RegisterUserDto,
-  IUpdateUserDto,
-} from "../services/dto/userDTOs.js";
+import type { IdParams } from '../schemas/common.schema.js';
+import type { RegisterUserDto, UpdateUserDto } from '../schemas/user.schema.js';
 
 export class UserController {
   private static userService = new UserService();
 
   static async register(req: Request, res: Response) {
     try {
-      const { name, email, password, phone, birthDate } = req.body;
-
-      if (!name || !email || !password || !phone || !birthDate) {
-        throw new Error(
-          "Todos os campos (name, email, password, phone, birthDate) são obrigatórios."
-        );
-      }
-
-      const userData: RegisterUserDto = {
-        name,
-        email,
-        password,
-        phone,
-        birthDate,
-      };
+      const userData: RegisterUserDto = req.body;
 
       const newUser = await UserController.userService.register(userData);
       res.status(201).json(newUser);
@@ -35,11 +19,7 @@ export class UserController {
 
   static async login(req: Request, res: Response) {
     try {
-      const { email, password } = req.body;
-      const authPayload = await UserController.userService.authenticate({
-        email,
-        password,
-      });
+      const authPayload = await UserController.userService.authenticate(req.body);
       res.status(200).json(authPayload);
     } catch (error: any) {
       res.status(401).json({ error: (error as Error).message });
@@ -62,22 +42,11 @@ export class UserController {
     }
   }
 
-  static async deleteUser(req: Request, res: Response) {
+  static async deleteUser(req: Request<IdParams>, res: Response) {
     try {
-      const { id } = req.params;
       const authenticatedUser = req.user;
 
-      if (!id) {
-        return res.status(400).json({ error: "ID do usuário é obrigatório" });
-      }
-
-      let userIdToDelete: bigint;
-
-      try {
-        userIdToDelete = BigInt(id);
-      } catch (error) {
-        throw new Error("O ID do usuário é inválido ou mal formatado.");
-      }
+      const userIdToDelete = BigInt(req.params.id);
 
       const result = await UserController.userService.deleteUser(
         userIdToDelete,
@@ -95,23 +64,12 @@ export class UserController {
     }
   }
 
-  static async updateProfile(req: Request, res: Response) {
+  static async updateProfile(req: Request<IdParams, any, UpdateUserDto>, res: Response) {
     try {
-      const { id } = req.params;
-      const dataToUpdate: IUpdateUserDto = req.body;
+      const dataToUpdate = req.body;
       const authenticatedUser = req.user;
 
-      if (!id) {
-        return res.status(400).json({ error: "ID do usuário é obrigatório" });
-      }
-
-      let userIdToUpdate: bigint;
-
-      try {
-        userIdToUpdate = BigInt(id);
-      } catch (error) {
-        throw new Error("O ID do usuário é inválido ou mal formatado.");
-      }
+      let userIdToUpdate = BigInt(req.params.id);
 
       if (Object.keys(dataToUpdate).length === 0) {
         throw new Error("Nenhum dado fornecido para atualização.");
@@ -134,21 +92,11 @@ export class UserController {
     }
   }
 
-  static async viewProfile(req: Request, res: Response) {
+  static async viewProfile(req: Request<IdParams>, res: Response) {
     try {
-      const { id } = req.params;
       const authenticatedUser = req.user;
 
-      let userId: bigint;
-
-      if (!id) {
-        return res.status(400).json({ error: "ID do usuário é obrigatório" });
-      }
-      try {
-        userId = BigInt(id);
-      } catch (error) {
-        throw new Error("O ID do usuário é inválido ou mal formatado.");
-      }
+      let userId = BigInt(req.params.id);
 
       const user = await UserController.userService.viewProfile(
         userId,

@@ -3,16 +3,12 @@ import { UserRepository } from "../repositories/userRepository.js";
 import { UserType, type Prisma, type User } from "@prisma/client";
 import redisClient from "../configs/redis.client.js";
 import { generateToken, verifyToken } from "../configs/jwt.config.js";
+import type { IAuthenticatedUser } from '../@types/express/index.js';
 import type {
   RegisterUserDto,
   authenticateUserDto,
-  IUpdateUserDto,
-} from "./dto/userDTOs.js";
-
-interface IAuthenticatedUser {
-  id: bigint;
-  role: UserType;
-}
+  UpdateUserDto,
+} from "../schemas/user.schema.js";
 
 export class UserService {
   private userRepository = new UserRepository();
@@ -38,7 +34,7 @@ export class UserService {
 
   async updateProfile(
     userId: bigint,
-    data: IUpdateUserDto,
+    data: UpdateUserDto,
     authenticatedUser: IAuthenticatedUser
   ): Promise<Omit<User, "password">> {
     const user = await this.userRepository.findById(userId);
@@ -62,21 +58,12 @@ export class UserService {
 
     const dataToUpdate: Prisma.UserUpdateInput = {};
 
-    if (data.name) {
-      dataToUpdate.name = data.name;
-    }
-    if (data.email) {
-      dataToUpdate.email = data.email;
-    }
-    if (data.phone) {
-      dataToUpdate.phone = data.phone;
-    }
-    if (data.birthDate) {
-      dataToUpdate.birthDate = new Date(data.birthDate);
-    }
-    if (data.userType) {
-      dataToUpdate.userType = data.userType;
-    }
+    if (data.name) dataToUpdate.name = data.name;
+    if (data.email) dataToUpdate.email = data.email;
+    if (data.phone) dataToUpdate.phone = data.phone;
+    if (data.birthDate) dataToUpdate.birthDate = new Date(data.birthDate);
+    if (data.userType) dataToUpdate.userType = data.userType;
+
 
     if (data.password && typeof data.password === "string") {
       data.password = await hash(data.password, 10);
@@ -143,7 +130,9 @@ export class UserService {
     return users.map(({ password, ...safeUser }) => safeUser);
   }
 
-  async authenticate(data: authenticateUserDto): Promise<{user: Omit<User, 'password'>, token: string}> {
+  async authenticate(
+    data: authenticateUserDto
+  ): Promise<{ user: Omit<User, "password">; token: string }> {
     const user = await this.userRepository.findByEmail(data.email);
     if (!user || !(await compare(data.password, user.password))) {
       throw new Error("Email ou senha inválidos");

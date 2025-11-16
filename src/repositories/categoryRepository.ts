@@ -14,6 +14,12 @@ export class CategoryRepository {
         });
     }
 
+    async findByDescription(description: string): Promise<Category | null> {
+    return prisma.category.findFirst({
+      where: { description: { equals: description, mode: 'insensitive' } },
+    });
+    }
+
     async update(id: bigint, data: Prisma.CategoryUpdateInput): Promise<Category> {
         return prisma.category.update({
             where: { id },

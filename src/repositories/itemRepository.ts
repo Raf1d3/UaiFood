@@ -8,6 +8,10 @@ export class ItemRepository {
         return prisma.item.findMany();
     }
 
+    async countByCategoryId(categoryId: bigint): Promise<number> {
+    return prisma.item.count({ where: { categoryId } });
+    }
+
     findAllByCategoryId(categoryId: bigint): Promise<Item[]> {
         return prisma.item.findMany({
             where: { categoryId }
