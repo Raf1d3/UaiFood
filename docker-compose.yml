@@ -2,7 +2,7 @@ services:
   app:
     container_name: appUaifood
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     
     command: >
@@ -18,7 +18,7 @@ services:
       - db
 
     volumes:
-      - ./:/app
+      - ./backend:/app
       - /app/node_modules
 
   db:
