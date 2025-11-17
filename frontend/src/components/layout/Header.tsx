@@ -1,20 +1,31 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { useAuthStore } from '@/store/authStore';
-import { useCartStore } from '@/store/cartStore';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import Link from "next/link";
+import Image from "next/image";
+import { useAuthStore } from "@/store/authStore";
+import { useCartStore } from "@/store/cartStore";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   ShoppingCart,
   LogOut,
   User,
+  UserCircle,
+  Settings,
   Search,
   LogIn,
   UserPlus,
-} from 'lucide-react';
-import { useRouter, usePathname } from 'next/navigation';
+} from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 
 export function Header() {
   // --- Hooks ---
@@ -48,10 +59,10 @@ export function Header() {
    */
   const handleLoginClick = () => {
     // Não redireciona se já estivermos no login/register
-    if (pathname !== '/login' && pathname !== '/register') {
+    if (pathname !== "/login" && pathname !== "/register") {
       router.push(`/login?redirect=${pathname}`);
     } else {
-      router.push('/login');
+      router.push("/login");
     }
   };
 
@@ -61,7 +72,16 @@ export function Header() {
    */
   const handleLogout = () => {
     logout();
-    router.push('/');
+    router.push("/");
+  };
+
+  const getInitials = (name: string | undefined | null) => {
+    if (!name) return "U";
+    const names = name.split(" ");
+    if (names.length > 1) {
+      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -69,17 +89,14 @@ export function Header() {
       <div className="container flex h-16 items-center gap-10">
         {/* --- Logo e Links da Esquerda --- */}
         <div className="flex items-center gap-6">
-          <Link
-            href="/"
-            className="text-2xl font-bold transition-colors"
-          >
+          <Link href="/" className="text-2xl font-bold transition-colors">
             <Image
               src="/images/Logo_uaiFood.webp"
               alt="UaiFood Logo"
               width={100} // Defina a largura
               height={40} // Defina a altura
               priority // Para o logo carregar mais rápido
-              style={{ objectFit: 'contain' }} // Garante que a imagem não distorça
+              style={{ objectFit: "contain" }} // Garante que a imagem não distorça
             />
           </Link>
           <nav className="hidden items-center gap-4 text-sm font-medium text-muted-foreground md:flex">
@@ -110,34 +127,60 @@ export function Header() {
 
         {/* --- Botões da Direita --- */}
         <nav className="flex items-center gap-3">
-          {/* Botão Carrinho (Sempre visível) */}
-          <Button
-            variant="outline"
-            size="icon"
-            className="relative h-9 w-9"
-            onClick={() => handleProtectedLink('/cart')}
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {cartItemCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
-                {cartItemCount}
-              </span>
-            )}
-            <span className="sr-only">Carrinho</span>
-          </Button>
-
           {/* Bloco de Autenticação Condicional */}
           {isAuthenticated ? (
             // --- USUÁRIO LOGADO ---
             <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      {/* Se o usuário tiver uma imagem, ela aparecerá aqui */}
+                      <AvatarImage
+                        src={""}
+                        alt={user?.name?.split(" ")[0] || "Usuário"}
+                      />
+                      {/* Senão, mostra as iniciais */}
+                      <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
+                    </Avatar>
+                    <span>{user?.name?.split(" ")[0] || "Usuário"}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-56">
+                  <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <Link href="/dashboard/profile">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <UserCircle className="mr-2 h-4 w-4" />
+                      <span>Perfil</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/dashboard/settings">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Configurações</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="cursor-pointer text-red-500"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sair</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {/*
               <div className="hidden items-center text-sm font-medium sm:flex">
                 <User className="mr-1 h-4 w-4" />
-                <span>Olá, {user?.name?.split(' ')[0] || 'Usuário'}</span>
+                <span>Olá, {user?.name?.split(" ")[0] || "Usuário"}</span>
               </div>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="mr-1 h-4 w-4" />
                 Sair
               </Button>
+              */}
             </>
           ) : (
             // --- USUÁRIO DESLOGADO ---
@@ -159,6 +202,21 @@ export function Header() {
               </Link>
             </>
           )}
+          {/* Botão Carrinho (Sempre visível) */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="relative h-9 w-9"
+            onClick={() => handleProtectedLink("/cart")}
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {cartItemCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+                {cartItemCount}
+              </span>
+            )}
+            <span className="sr-only">Carrinho</span>
+          </Button>
         </nav>
       </div>
     </header>

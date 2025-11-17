@@ -20,7 +20,7 @@ userRouter.post("/login", validate(loginUserSchema), UserController.login);
 // Rotas autenticadas
 userRouter.post("/logout", authMiddleware, UserController.logout);
 userRouter.get("/user/:id", validate(viewProfileSchema), authMiddleware, UserController.viewProfileId);
-userRouter.get("/user", validate(viewProfileSchema), authMiddleware, UserController.viewMyProfile);
+userRouter.get("/user", authMiddleware, UserController.viewMyProfile);
 userRouter.delete("/user/:id", validate(deleteUserSchema), authMiddleware, UserController.deleteUser);
 userRouter.put("/user/:id", validate(updateUserSchema), authMiddleware, UserController.updateProfile);
 

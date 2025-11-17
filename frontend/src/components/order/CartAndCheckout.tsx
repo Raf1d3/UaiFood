@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Trash2, Plus, Minus, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { AddressFormModal } from './AddressFormModal';
 
 interface Address {
   id: string;
@@ -25,7 +26,7 @@ interface Address {
 
 export function CartAndCheckout() {
   const { items, total, updateQuantity, removeItem, clearCart } = useCartStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>('PIX');
@@ -35,14 +36,14 @@ export function CartAndCheckout() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchAddresses();
+    if (isAuthenticated && user?.id) {
+      fetchAddresses(user.id);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id]);
 
-  const fetchAddresses = async () => {
+  const fetchAddresses = async (userId: string) => {
     try {
-      const response = await api.get('/addresses');
+      const response = await api.get(`/address/${userId}`);
       setAddresses(response.data);
       if (response.data.length > 0) {
         setSelectedAddressId(response.data[0].id);
@@ -97,7 +98,7 @@ export function CartAndCheckout() {
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle>Seu Carrinho e Finalização</CardTitle>
+        <CardTitle>Carrinho</CardTitle>
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
@@ -190,7 +191,7 @@ export function CartAndCheckout() {
                     ))}
                   </SelectContent>
                 </Select>
-                {addresses.length === 0 && <p className="text-sm text-red-500 mt-1">Nenhum endereço cadastrado. Cadastre um endereço para continuar.</p>}
+                <AddressFormModal onAddressAdded={() => fetchAddresses(user!.id)} />
               </div>
 
               <div>
