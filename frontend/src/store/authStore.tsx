@@ -4,8 +4,10 @@ import api from "@/lib/api";
 interface User {
   id: string;
   name: string;
+  phone	: string;
   email: string;
   userType: "CLIENT" | "ADMIN";
+  birthDate	: string | null;
 }
 
 interface AuthState {

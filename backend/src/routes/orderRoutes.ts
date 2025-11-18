@@ -4,7 +4,8 @@ import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validate.middleware.js';
 import {
   createOrderSchema,
-  orderParamsSchema
+  orderParamsSchema,
+  updateOrderStatusSchema,
 } from '../schemas/order.schemas.js';
 
 const orderRouter = Router();
@@ -15,6 +16,11 @@ orderRouter.use(authMiddleware);
 orderRouter.post('/', validate(createOrderSchema), OrderController.create);
 orderRouter.get('/', OrderController.findAll);
 orderRouter.get('/:id', validate(orderParamsSchema), OrderController.findById);
+orderRouter.patch(
+  '/status/:id', 
+  validate(updateOrderStatusSchema), 
+  OrderController.updateStatus
+);
 
 /**
  * @swagger
@@ -101,5 +107,43 @@ orderRouter.get('/:id', validate(orderParamsSchema), OrderController.findById);
  *       '404':
  *         description: Pedido não encontrado
  */
+
+/**
+ * @swagger
+ * /orders/status/{id}/:
+ *   patch:
+ *     summary: Atualiza o status de um pedido
+ *     tags: [Orders]
+ *     description: Atualiza o status. ADMINs podem definir qualquer status. CLIENTs apenas DELIVERED ou CANCELED.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID do pedido.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateOrderStatusDto'
+ *     responses:
+ *       '200':
+ *         description: Status atualizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StatusOrder'
+ *       '401':
+ *         description: Não autorizado
+ *       '403':
+ *         description: Acesso negado ou transição de status inválida para o perfil
+ *       '404':
+ *         description: Pedido não encontrado
+ */
+
 
 export default orderRouter;

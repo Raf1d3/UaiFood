@@ -1,6 +1,6 @@
 import prisma from "../../prisma/prismaClient.js";
 
-import type { Prisma, Order } from "@prisma/client";
+import type { Prisma, Order, OrderStatus } from "@prisma/client";
 
 
 export class OrderRepository {
@@ -47,6 +47,13 @@ export class OrderRepository {
     ): Promise<Order> {
         return tx.order.create({
             data,
+        });
+    }
+
+    async updateStatus(id: bigint, status: OrderStatus): Promise<Order> {
+        return prisma.order.update({
+            where: { id },
+            data: { status },
         });
     }
 }

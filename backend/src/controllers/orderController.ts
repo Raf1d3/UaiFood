@@ -1,7 +1,8 @@
 import type { Request, Response } from "express";
 import { OrderService } from "../services/orderService.js";
 import type { IdParams } from "../schemas/common.schema.js";
-import type{ CreateOrderDto } from "../schemas/order.schemas.js";
+import type{ CreateOrderDto, UpdateOrderStatusDto } from "../schemas/order.schemas.js";
+import { OrderStatus } from '@prisma/client';
 
 export class OrderController {
   private static orderService = new OrderService();
@@ -22,6 +23,30 @@ export class OrderController {
       if (error.message.includes("Acesso negado")) {
         return res.status(403).json({ error: error.message });
       }
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  static async updateStatus(req: Request<IdParams, any, UpdateOrderStatusDto>, res: Response) {
+    try {
+      const authenticatedUser = req.user;
+      const orderId = BigInt(req.params.id);
+      const { status } = req.body;
+
+      const newStatus = status as OrderStatus;
+
+      const updatedOrder = await OrderController.orderService.updateStatus(
+        orderId,
+        newStatus,
+        authenticatedUser
+      );
+
+      res.status(200).json(updatedOrder);
+    } catch (error: any) {
+      if (error.message.includes('não encontrado')) return res.status(404).json({ error: error.message });
+      if (error.message.includes('Acesso negado')) return res.status(403).json({ error: error.message });
+      if (error.message.includes('Clientes só podem')) return res.status(403).json({ error: error.message });
+      
       res.status(400).json({ error: error.message });
     }
   }

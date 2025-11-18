@@ -1,12 +1,25 @@
 'use client';
 
-import { useState } from 'react';
-import api from '@/lib/api'; // (Assumindo que está em src/lib/api.ts)
-import { useAuthStore } from '@/store/authStore'; // (Assumindo que está em src/store/authStore.ts)
+import { useState, useEffect } from 'react';
+import api from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Pencil } from 'lucide-react';
+
+// Assumindo que a interface Address foi definida globalmente ou no componente pai
+interface Address {
+  id: string;
+  street: string;
+  number: string;
+  district: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  userId: string;
+}
+
 import {
   Dialog,
   DialogContent,
@@ -18,163 +31,167 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 
-// 1. Defina uma "prop" para que este componente
-//    possa "avisar" a página de checkout que um
-//    novo endereço foi salvo.
 interface AddressFormModalProps {
-  onAddressAdded: () => void;
+  onSuccess: () => void;
+  addressToEdit?: Address | null; // Se vier preenchido, é modo EDIÇÃO
 }
 
-export function AddressFormModal({ onAddressAdded }: AddressFormModalProps) {
+export function AddressFormModal({ onSuccess, addressToEdit }: AddressFormModalProps) {
   const { user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Estados para o formulário
-  const [street, setStreet] = useState('');
-  const [number, setNumber] = useState('');
-  const [district, setDistrict] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [zipCode, setZipCode] = useState('');
+  // Estados do formulário
+  const [formData, setFormData] = useState({
+    street: '',
+    number: '',
+    district: '',
+    city: '',
+    state: '',
+    zipCode: '',
+  });
+
+  // Efeito para carregar dados se for edição
+  useEffect(() => {
+    if (isOpen && addressToEdit) {
+      setFormData({
+        street: addressToEdit.street,
+        number: addressToEdit.number,
+        district: addressToEdit.district,
+        city: addressToEdit.city,
+        state: addressToEdit.state,
+        zipCode: addressToEdit.zipCode,
+      });
+    } else if (isOpen && !addressToEdit) {
+      // Limpa se for criação
+      setFormData({
+        street: '',
+        number: '',
+        district: '',
+        city: '',
+        state: '',
+        zipCode: '',
+      });
+    }
+  }, [isOpen, addressToEdit]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    if (!user) {
-      setError('Você precisa estar logado para adicionar um endereço.');
-      setIsLoading(false);
-      return;
-    }
+    if (!user) return;
 
-    // 2. Monta o DTO que o Zod espera no back-end
-    const addressData = {
-      street,
-      number,
-      district,
-      city,
-      state,
-      zipCode,
-    };
-    
-    // 3. Usa a rota correta que criamos: POST /users/:id/addresses
     try {
-      await api.post(`/users/${user.id}/addresses`, addressData);
+      if (addressToEdit) {
+        // --- MODO EDIÇÃO (PUT) ---
+        await api.put(`/address/${addressToEdit.id}`, formData);
+      } else {
+        // --- MODO CRIAÇÃO (POST) ---
+        await api.post(`/address/${user.id}/`, formData);
+      }
 
-      // Sucesso!
-      setIsOpen(false); // Fecha o modal
-      onAddressAdded(); // 4. Avisa a página de checkout para recarregar os endereços
-      
-      // Limpa o formulário
-      setStreet('');
-      setNumber('');
-      setDistrict('');
-      setCity('');
-      setState('');
-      setZipCode('');
-
+      setIsOpen(false);
+      onSuccess(); // Recarrega a lista pai
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'Erro ao salvar endereço.';
       setError(errorMessage);
+      console.error('Erro ao salvar endereço:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const isEditing = !!addressToEdit;
+
   return (
-    // 5. O Dialog do Shadcn controla o estado de "aberto/fechado"
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        {/* Este é o botão que fica na página de checkout */}
-        <Button variant="outline" size="sm" className="mt-2">
-          Adicionar Novo Endereço
-        </Button>
+        {isEditing ? (
+          <Button variant="ghost" size="icon">
+            <Pencil className="h-4 w-4 text-blue-600" />
+          </Button>
+        ) : (
+          // O botão 'Adicionar Novo Endereço' na página de Checkout
+          <Button variant="outline" size="sm" className="gap-2">
+            <Plus className="h-4 w-4" /> Adicionar Novo
+          </Button>
+        )}
       </DialogTrigger>
       
       {/* 6. Este é o conteúdo do Pop-up (Modal) */}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Novo Endereço</DialogTitle>
+          <DialogTitle>{isEditing ? 'Editar Endereço' : 'Novo Endereço'}</DialogTitle>
           <DialogDescription>
-            Preencha os dados do seu novo endereço de entrega.
+            {isEditing ? 'Altere os dados do seu endereço abaixo.' : 'Preencha os dados do novo endereço de entrega.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            {/* Adicione os campos do formulário aqui */}
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="street" className="text-right">
-                Rua
-              </Label>
+              <Label htmlFor="street" className="text-right">Rua</Label>
               <Input
                 id="street"
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
+                value={formData.street}
+                onChange={handleChange}
                 className="col-span-3"
                 required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="number" className="text-right">
-                Número
-              </Label>
+              <Label htmlFor="number" className="text-right">Número</Label>
               <Input
                 id="number"
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
+                value={formData.number}
+                onChange={handleChange}
                 className="col-span-3"
                 required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="district" className="text-right">
-                Bairro
-              </Label>
+              <Label htmlFor="district" className="text-right">Bairro</Label>
               <Input
                 id="district"
-                value={district}
-                onChange={(e) => setDistrict(e.target.value)}
+                value={formData.district}
+                onChange={handleChange}
                 className="col-span-3"
                 required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="city" className="text-right">
-                Cidade
-              </Label>
+              <Label htmlFor="city" className="text-right">Cidade</Label>
               <Input
                 id="city"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
+                value={formData.city}
+                onChange={handleChange}
                 className="col-span-3"
                 required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="state" className="text-right">
-                Estado (UF)
-              </Label>
+              <Label htmlFor="state" className="text-right">UF</Label>
               <Input
                 id="state"
-                value={state}
-                onChange={(e) => setState(e.target.value)}
+                value={formData.state}
+                onChange={handleChange}
                 className="col-span-3"
                 maxLength={2}
                 required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="zipCode" className="text-right">
-                CEP
-              </Label>
+              <Label htmlFor="zipCode" className="text-right">CEP</Label>
               <Input
                 id="zipCode"
-                value={zipCode}
-                onChange={(e) => setZipCode(e.target.value)}
+                value={formData.zipCode}
+                onChange={handleChange}
                 className="col-span-3"
                 required
               />
@@ -190,10 +207,8 @@ export function AddressFormModal({ onAddressAdded }: AddressFormModalProps) {
               </Button>
             </DialogClose>
             <Button type="submit" disabled={isLoading}>
-              {isLoading && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Salvar Endereço
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar
             </Button>
           </DialogFooter>
         </form>

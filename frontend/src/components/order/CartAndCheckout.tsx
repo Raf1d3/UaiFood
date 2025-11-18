@@ -10,19 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, Minus, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Minus, Loader2, ListPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AddressFormModal } from './AddressFormModal';
-
-interface Address {
-  id: string;
-  street: string;
-  number: string;
-  district: string;
-  city: string;
-  state: string;
-  zipCode: string;
-}
+import { Address } from '@/types';  
 
 export function CartAndCheckout() {
   const { items, total, updateQuantity, removeItem, clearCart } = useCartStore();
@@ -45,8 +36,13 @@ export function CartAndCheckout() {
     try {
       const response = await api.get(`/address/${userId}`);
       setAddresses(response.data);
-      if (response.data.length > 0) {
+      if (response.data.length > 0 && !selectedAddressId) {
         setSelectedAddressId(response.data[0].id);
+      } else if (response.data.length > 0 && selectedAddressId) {
+        const selectedStillExists = response.data.find((a: { id: string; }) => a.id === selectedAddressId);
+        if (!selectedStillExists) {
+           setSelectedAddressId(response.data[0].id);
+        }
       }
     } catch (err) {
       console.error('Erro ao buscar endereços:', err);
@@ -139,7 +135,7 @@ export function CartAndCheckout() {
                               updateQuantity(item.id, q);
                             }
                           }}
-                          className="w-16 text-center"
+                          className="w-16 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <Button
                           variant="outline"
@@ -170,11 +166,26 @@ export function CartAndCheckout() {
               </TableBody>
             </Table>
 
-            <div className="mt-8 space-y-4">
-              <h3 className="text-lg font-semibold">Detalhes da Entrega e Pagamento</h3>
-              
-              <div>
-                <Label htmlFor="address">Endereço de Entrega</Label>
+            <div className="space-y-2 mt-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="address">Endereço de Entrega</Label>
+                  
+                  <div className="flex items-center gap-2">
+                    {/* Botão 1: Adicionar Endereço (Modal) */}
+                    <AddressFormModal onSuccess={() => user?.id && fetchAddresses(user.id)} />
+                    
+                    {/* Botão 2: Gerenciar Endereços (Link para a página) */}
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => router.push('/address')}
+                        className="text-sm text-red-600 hover:text-red-700"
+                    >
+                        <ListPlus className="h-4 w-4 mr-1" /> Gerenciar
+                    </Button>
+                  </div>
+                </div>
+
                 <Select
                   onValueChange={setSelectedAddressId}
                   value={selectedAddressId || ''}
@@ -191,16 +202,17 @@ export function CartAndCheckout() {
                     ))}
                   </SelectContent>
                 </Select>
-                <AddressFormModal onAddressAdded={() => fetchAddresses(user!.id)} />
-              </div>
+                {addresses.length === 0 && (
+                    <p className="text-sm text-red-500 mt-1">Nenhum endereço cadastrado. Use o botão Adicionar para continuar.</p>
+                )}
 
-              <div>
-                <Label htmlFor="payment">Método de Pagamento</Label>
+              <div className="mt-4">
+                <Label className='mb-2' htmlFor="payment">Método de Pagamento</Label>
                 <Select onValueChange={setPaymentMethod} value={paymentMethod}>
                   <SelectTrigger id="payment">
                     <SelectValue placeholder="Selecione o método de pagamento" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent align="start">
                     <SelectItem value="PIX">PIX</SelectItem>
                     <SelectItem value="CREDIT">Cartão de Crédito</SelectItem>
                     <SelectItem value="DEBIT">Cartão de Débito</SelectItem>

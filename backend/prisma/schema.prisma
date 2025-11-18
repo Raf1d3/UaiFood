@@ -94,6 +94,9 @@ model Order {
 model OrderItem {
   id        BigInt   @id @default(autoincrement())
   quantity  Int
+
+  unitPrice Decimal  @db.Decimal(10, 2)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

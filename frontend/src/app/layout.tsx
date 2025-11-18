@@ -5,6 +5,7 @@ import "./globals.css";
 import { StoreInitializer } from '@/components/StoreInitializer';
 import { Header } from "@/components/layout/Header";
 import { cn } from "@/lib/utils";
+import { Footer } from "@/components/layout/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,12 +32,13 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={cn(
-        "min-h-screen bg-background font-sans antialiased",
+        "min-h-screen bg-background font-sans antialiased flex flex-col",
         inter.className
       )}>
         <StoreInitializer />
         <Header />
-          <main className="container mx-auto p-4">{children}</main>
+          <main className="container mx-auto p-4 flex-1 w-full">{children}</main>
+        <Footer />
       </body>
     </html>
   );

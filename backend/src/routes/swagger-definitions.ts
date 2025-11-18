@@ -386,6 +386,15 @@
  *           format: integer
  *           minimum: 1
  *           example: 2
+ * 
+ *     UpdateOrderStatusDto:
+ *       type: object
+ *       required: [status]
+ *       properties:
+ *         status:
+ *           type: string
+ *           enum: [PENDING, PROCESSING, DELIVERED, CANCELED]
+ *           example: "DELIVERED"
  *
  *     # --- Objeto de Resposta Order ---
  *     Order:
@@ -427,6 +436,29 @@
  *           format: bigint
  *         item:
  *           $ref: '#/components/schemas/Item'
+ *
+ *     StatusOrder:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: bigint
+ *         paymentMethod:
+ *           type: string
+ *           enum: [CREDIT_CARD, DEBIT_CARD, PIX, CASH]
+ *         status:
+ *           type: string
+ *           enum: [PENDING, PROCESSING, DELIVERED, CANCELED]
+ *         clientId:
+ *           type: string
+ *           format: bigint
+ *         createdById:
+ *           type: string
+ *           format: bigint
+ *         addressId:
+ *           type: string
+ *           format: bigint
+ * 
  */
 
 /**

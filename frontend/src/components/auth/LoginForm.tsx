@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/dist/client/link";
 
 export function LoginForm() {
@@ -23,6 +23,8 @@ export function LoginForm() {
   const { login } = useAuthStore();
   const router = useRouter();
 
+  const searchParams = useSearchParams();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -31,7 +33,14 @@ export function LoginForm() {
       const response = await api.post("/login", { email, password });
       const { token, user } = response.data;
       login(token, user);
-      router.push("/");
+
+      const redirectPath = searchParams.get('redirect');
+
+      if (redirectPath) {
+        router.push(redirectPath); 
+      } else {
+        router.push('/');
+      }
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message ||

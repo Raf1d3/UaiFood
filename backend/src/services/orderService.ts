@@ -6,7 +6,10 @@ import type { IAuthenticatedUser } from "../@types/express/index.js";
 import { ItemRepository } from "../repositories/itemRepository.js";
 import { AddressRepository } from "../repositories/addressRepository.js";
 
-import type { CreateOrderDto } from "../schemas/order.schemas.js";
+import type {
+  CreateOrderDto,
+  UpdateOrderStatusDto,
+} from "../schemas/order.schemas.js";
 
 export class OrderService {
   private orderRepository = new OrderRepository();
@@ -22,18 +25,22 @@ export class OrderService {
 
     if (authenticatedUser.role === UserType.ADMIN) {
       if (!data.clientId) {
-        throw new Error("Admin deve especificar um 'clientId' para criar o pedido.");
+        throw new Error(
+          "Admin deve especificar um 'clientId' para criar o pedido."
+        );
       }
       clientIdForOrder = data.clientId;
     } else {
       clientIdForOrder = authenticatedUser.id;
     }
 
-    const client = await prisma.user.findUnique({ where: { id: clientIdForOrder } });
+    const client = await prisma.user.findUnique({
+      where: { id: clientIdForOrder },
+    });
     if (!client) {
       throw new Error("O cliente-alvo do pedido não foi encontrado.");
     }
-    
+
     const address = await this.addressRepository.findById(data.addressId);
     if (!address) {
       throw new Error("Endereço não encontrado.");
@@ -61,7 +68,7 @@ export class OrderService {
             status: OrderStatus.PENDING, // Status inicial
             client: { connect: { id: clientIdForOrder } }, // Conecta ao cliente (quem paga)
             createdBy: { connect: { id: createdByIdForOrder } }, // Conecta o Criador (o atendente/admin/usuário logado)
-            address: { connect: { id: data.addressId } }
+            address: { connect: { id: data.addressId } },
           },
         });
 
@@ -76,7 +83,7 @@ export class OrderService {
             orderId: order.id,
             itemId: itemDto.itemId,
             quantity: itemDto.quantity,
-            unitPrice: itemDb ? itemDb.unitPrice : 0 // Salva o preço no momento da compra
+            unitPrice: itemDb!.unitPrice, // Salva o preço no momento da compra
           };
         });
 
@@ -88,6 +95,28 @@ export class OrderService {
         return order;
       });
 
+      // --- SIMULAÇÃO DE SISTEMA DE APROVAÇÃO (PROVISÓRIO) ---
+      // Executa após 1 minuto (60000 ms) sem travar a resposta da API
+      setTimeout(async () => {
+        try {
+          console.log(
+            `[Simulação] Iniciando aprovação do pedido ${newOrder.id}...`
+          );
+          await this.orderRepository.updateStatus(
+            newOrder.id,
+            OrderStatus.PROCESSING
+          );
+          console.log(
+            `[Simulação] Pedido ${newOrder.id} atualizado para PROCESSING.`
+          );
+        } catch (error) {
+          console.error(
+            `[Simulação] Erro ao aprovar pedido ${newOrder.id}`,
+            error
+          );
+        }
+      }, 60000);
+
       // Retorna o pedido completo
       // (Busca de novo para poder incluir os 'items' na resposta)
       return (await this.orderRepository.findById(newOrder.id))!;
@@ -95,6 +124,38 @@ export class OrderService {
       // Se qualquer parte da transação falhar, o Prisma faz o rollback.
       throw new Error("Erro ao processar o pedido: " + error.message);
     }
+  }
+
+  async updateStatus(
+    orderId: bigint,
+    newStatus: OrderStatus,
+    authenticatedUser: IAuthenticatedUser
+  ): Promise<Order> {
+    const order = await this.orderRepository.findById(orderId);
+    if (!order) {
+      throw new Error("Pedido não encontrado.");
+    }
+
+    if (authenticatedUser.role === UserType.CLIENT) {
+      // Só pode alterar seus próprios pedidos
+      if (order.clientId !== authenticatedUser.id) {
+        throw new Error("Acesso negado. Este pedido não é seu.");
+      }
+
+      // Só pode definir status como ENTREGUE ou CANCELADO
+      const allowedStatuses: OrderStatus[] = [OrderStatus.DELIVERED, OrderStatus.CANCELED];
+      if (!allowedStatuses.includes(newStatus)) {
+        throw new Error(
+          "Clientes só podem marcar o pedido como Entregue ou Cancelado."
+        );
+      }
+
+      if (order.status === OrderStatus.DELIVERED) {
+        throw new Error("Não é possível alterar um pedido já entregue.");
+      }
+    }
+
+    return this.orderRepository.updateStatus(orderId, newStatus);
   }
 
   async findById(
