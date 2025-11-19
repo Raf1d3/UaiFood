@@ -7,18 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Plus, Pencil } from 'lucide-react';
-
-// Assumindo que a interface Address foi definida globalmente ou no componente pai
-interface Address {
-  id: string;
-  street: string;
-  number: string;
-  district: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  userId: string;
-}
+import { Address } from '@/types'
+import { toast } from "sonner"
 
 import {
   Dialog,
@@ -34,13 +24,13 @@ import {
 interface AddressFormModalProps {
   onSuccess: () => void;
   addressToEdit?: Address | null; // Se vier preenchido, é modo EDIÇÃO
+  targetUserId?: string;
 }
 
-export function AddressFormModal({ onSuccess, addressToEdit }: AddressFormModalProps) {
+export function AddressFormModal({ onSuccess, addressToEdit, targetUserId }: AddressFormModalProps) {
   const { user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
   // Estados do formulário
   const [formData, setFormData] = useState({
@@ -83,25 +73,32 @@ export function AddressFormModal({ onSuccess, addressToEdit }: AddressFormModalP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
 
-    if (!user) return;
+    const userIdToUse = targetUserId || user?.id;
+
+    if (!userIdToUse) {
+        toast.error("Usuário não autenticado.");
+        setIsLoading(false);
+        return;
+    }
 
     try {
       if (addressToEdit) {
         // --- MODO EDIÇÃO (PUT) ---
         await api.put(`/address/${addressToEdit.id}`, formData);
+        toast.success("Endereço atualizado!");
       } else {
         // --- MODO CRIAÇÃO (POST) ---
-        await api.post(`/address/${user.id}/`, formData);
+        await api.post(`/address/${userIdToUse}`, formData);
+        toast.success("Novo endereço cadastrado!");
       }
 
       setIsOpen(false);
       onSuccess(); // Recarrega a lista pai
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'Erro ao salvar endereço.';
-      setError(errorMessage);
       console.error('Erro ao salvar endereço:', err);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -197,7 +194,6 @@ export function AddressFormModal({ onSuccess, addressToEdit }: AddressFormModalP
               />
             </div>
 
-            {error && <p className="text-sm text-red-500 col-span-4">{error}</p>}
           </div>
 
           <DialogFooter>

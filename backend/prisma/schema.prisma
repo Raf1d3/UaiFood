@@ -78,12 +78,12 @@ model Order {
   updatedAt     DateTime      @updatedAt
 
   // Relação 1-N com User (muitos pedidos pertencem a um cliente)
-  client   User   @relation("ClientOrders", fields: [clientId], references: [id])
+  client   User   @relation("ClientOrders", fields: [clientId], references: [id], onDelete: Cascade)
   clientId BigInt
 
   // Relação para identificar quem CRIOU o pedido (ex: um admin)
-  createdBy   User   @relation("CreatedOrders", fields: [createdById], references: [id])
-  createdById BigInt
+  createdBy   User?   @relation("CreatedOrders", fields: [createdById], references: [id], onDelete: SetNull)
+  createdById BigInt?
 
   address       Address   @relation(fields: [addressId], references: [id])
   addressId     BigInt

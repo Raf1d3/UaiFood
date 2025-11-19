@@ -66,7 +66,7 @@ export default function MyOrdersPage() {
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4">
-      <h1 className="mb-6 text-3xl font-bold text-gray-800">Meus Pedidos</h1>
+      <h1 className="mb-6 text-3xl font-bold">Meus Pedidos</h1>
 
       <OrderFilters 
         activeTab={activeTab} 
@@ -79,7 +79,7 @@ export default function MyOrdersPage() {
         {filteredOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
             <SearchX className="h-12 w-12 text-gray-300" />
-            <h3 className="mt-4 text-lg font-semibold text-gray-900">Nenhum pedido encontrado</h3>
+            <h3 className="mt-4 text-lg font-semibold ">Nenhum pedido encontrado</h3>
             <p className="text-sm text-gray-500">
               {activeTab !== 'ALL' || timeFilter !== 'ALL_TIME'
                 ? 'Tente mudar os filtros de busca.' 

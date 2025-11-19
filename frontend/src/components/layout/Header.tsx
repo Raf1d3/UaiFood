@@ -19,6 +19,7 @@ import {
   LogOut,
   UserCircle,
   ClipboardList,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -61,16 +62,22 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex w-full justify-center border-b bg-white/95 backdrop-blur-sm shadow-sm">
+    <header className="sticky top-0 z-40 flex w-full justify-center border-b shadow-sm">
       <div className="container flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center transition-opacity hover:opacity-90">
           <Image
-            src="./images/LogoHorizontalDestaque.svg"
-            alt="UaiFood Logo"
+            src="/images/LogoHorizontalLight.svg"
+            className="block dark:hidden"
             width={120}
             height={40}
-            priority
-            style={{ objectFit: 'contain' }}
+            alt="Logo clara"
+          />
+          <Image
+            src="/images/LogoHorizontalDark.svg"
+            className="hidden dark:block"
+            width={120}
+            height={40}
+            alt="Logo escura"
           />
         </Link>
 
@@ -86,7 +93,7 @@ export function Header() {
           >
             <ShoppingCart className="h-6 w-6" />
             {cartItemCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white shadow-sm ring-2 ring-white">
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 dark:bg-transparent text-xs font-bold text-white shadow-sm ring-2 ring-white">
                 {cartItemCount}
               </span>
             )}
@@ -97,12 +104,12 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 pl-2 pr-1 rounded-full hover:bg-gray-100">
-                  <span className="hidden text-sm font-medium text-gray-700 sm:inline-block">
+                  <span className="hidden text-sm font-medium sm:inline-block">
                     {user?.name?.split(' ')[0]}
                   </span>
-                  <Avatar className="h-9 w-9 border border-gray-200">
+                  <Avatar className="h-9 w-9 ">
                     <AvatarImage src="" alt={user?.name || 'Usuário'} />
-                    <AvatarFallback className="bg-red-100 text-red-700 font-bold">
+                    <AvatarFallback className= "font-bold">
                       {getInitials(user?.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -117,18 +124,29 @@ export function Header() {
                     <span>Perfil</span>
                   </DropdownMenuItem>
                 </Link>
-                <Link href="/my-orders">
+                <Link href="/orders">
                   <DropdownMenuItem className="cursor-pointer">
                     <ClipboardList className="mr-2 h-4 w-4" />
                     <span>Meus Pedidos</span>
                   </DropdownMenuItem>
                 </Link>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+
+              {user?.userType === 'ADMIN' && (
+                  <Link href="/panel">
+                    <DropdownMenuItem className="cursor-pointer font-medium">
+                      <LayoutDashboard className="mr-2 h-4 w-4 " />
+                      <span>Painel</span>
+                    </DropdownMenuItem>
+                  </Link>
+              )}
+
+              <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
+
             </DropdownMenu>
           ) : (
             <div className="flex items-center gap-2">
@@ -140,7 +158,7 @@ export function Header() {
                 Entrar
               </Button>
               <Link href="/register">
-                <Button className="bg-red-600 hover:bg-red-700 text-white font-bold shadow-md hover:shadow-lg transition-all">
+                <Button className=" font-bold shadow-md hover:shadow-lg transition-all">
                   Cadastrar
                 </Button>
               </Link>

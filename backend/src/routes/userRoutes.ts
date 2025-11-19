@@ -237,7 +237,7 @@ userRouter.get(
 
 /**
  * @swagger
- * /all:
+ * /users:
  *   get:
  *     summary: Lista TODOS os usuários (Requer ADMIN)
  *     tags: [Users]

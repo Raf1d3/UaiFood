@@ -74,7 +74,7 @@ export class AddressService {
   }
 
   async findAllByUserId(userId: bigint, authenticatedUser: IAuthenticatedUser): Promise<Address[]> {
-    const user = await this.userRepository.findById(userId);
+    const user = await this.userRepository.findById(authenticatedUser.id);
 
     if (!user) {
       throw new Error("Usuario não encontrado.");

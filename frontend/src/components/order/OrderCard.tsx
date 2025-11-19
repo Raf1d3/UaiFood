@@ -18,6 +18,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+import { toast } from "sonner"
+
 // --- Tipos Locais ---
 interface OrderItem {
   id: string;
@@ -63,8 +65,10 @@ export function OrderCard({ order, onUpdate }: OrderCardProps) {
       setIsLoading(true);
       await api.patch(`/orders/status/${order.id}`, { status: newStatus });
       onUpdate(); // Recarrega a lista pai
+      toast.success(newStatus === 'DELIVERED' ? "Entrega confirmada!" : "Pedido cancelado.");
     } catch (error) {
       console.error('Erro ao atualizar pedido:', error);
+      toast.error("Erro ao atualizar pedido. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +82,7 @@ export function OrderCard({ order, onUpdate }: OrderCardProps) {
 
   return (
     <Card className="overflow-hidden transition-shadow hover:shadow-md">
-      <CardHeader className="bg-gray-50/50 pb-4">
+      <CardHeader className=" pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-red-600">
@@ -101,13 +105,13 @@ export function OrderCard({ order, onUpdate }: OrderCardProps) {
 
       <CardContent className="pt-4">
         <div className="mb-4 space-y-1">
-          <p className="text-sm font-medium text-gray-500 mb-2">Resumo do Pedido:</p>
+          <p className="text-sm font-medium text-gray-500 dark:text-white mb-2">Resumo do Pedido:</p>
           {order.items.map((orderItem) => (
             <div key={orderItem.id} className="flex justify-between text-sm">
-              <span className="text-gray-700">
+              <span className="text-gray-700 dark:text-white">
                 <span className="font-semibold">{orderItem.quantity}x</span> {orderItem.item.description}
               </span>
-              <span className="text-gray-500">
+              <span className="text-gray-500 dark:text-white">
                 R$ {(parseFloat(orderItem.unitPrice) * orderItem.quantity).toFixed(2).replace('.', ',')}
               </span>
             </div>
@@ -116,7 +120,7 @@ export function OrderCard({ order, onUpdate }: OrderCardProps) {
 
         <div className="border-t pt-4 flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-white">
               Pagamento: <span className="font-medium text-gray-900">{PAYMENT_MAP[order.paymentMethod]}</span>
             </div>
             <div className="text-lg font-bold text-green-600">

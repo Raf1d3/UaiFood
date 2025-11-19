@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { toast } from "sonner"
 
 interface AddressCardProps {
   address: Address;
@@ -32,8 +33,10 @@ export function AddressCard({ address, onUpdate }: AddressCardProps) {
       setIsDeleting(true);
       await api.delete(`/addresses/${address.id}`);
       onUpdate();
+      toast.success("Endereço removido.");
     } catch (error) {
       console.error('Erro ao deletar endereço:', error);
+      toast.error("Não foi possível excluir o endereço.");
     } finally {
       setIsDeleting(false);
     }
@@ -47,7 +50,7 @@ export function AddressCard({ address, onUpdate }: AddressCardProps) {
             <MapPin className="h-5 w-5" />
           </div>
           <div className="space-y-1">
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="font-semibold ">
               {address.street}, {address.number}
             </h3>
             <p className="text-sm text-gray-500">
@@ -85,7 +88,7 @@ export function AddressCard({ address, onUpdate }: AddressCardProps) {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-600">
                   Sim, excluir
                 </AlertDialogAction>
               </AlertDialogFooter>

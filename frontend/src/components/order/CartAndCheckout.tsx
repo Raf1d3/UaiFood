@@ -14,6 +14,7 @@ import { Trash2, Plus, Minus, Loader2, ListPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AddressFormModal } from './AddressFormModal';
 import { Address } from '@/types';  
+import { toast } from "sonner"
 
 export function CartAndCheckout() {
   const { items, total, updateQuantity, removeItem, clearCart } = useCartStore();
@@ -22,8 +23,6 @@ export function CartAndCheckout() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>('PIX');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -46,6 +45,8 @@ export function CartAndCheckout() {
       }
     } catch (err) {
       console.error('Erro ao buscar endereços:', err);
+      const errorMessage = err.response?.data?.error || 'Erro ao buscar endereços.';
+      toast.error(errorMessage);
     }
   };
 
@@ -56,18 +57,16 @@ export function CartAndCheckout() {
     }
 
     if (items.length === 0) {
-      setError('Seu carrinho está vazio.');
+      toast.warning('Seu carrinho está vazio.');
       return;
     }
 
     if (!selectedAddressId) {
-      setError('Selecione um endereço de entrega.');
+      toast.warning('Selecione um endereço de entrega.');
       return;
     }
 
     setLoading(true);
-    setError('');
-    setSuccess('');
 
     try {
       const orderData = {
@@ -80,12 +79,14 @@ export function CartAndCheckout() {
       };
 
       await api.post('/orders', orderData);
-      
-      setSuccess('Pedido realizado com sucesso!');
+      toast.success("Pedido realizado com sucesso!");
       clearCart();
+
+      router.push('/orders');
+
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Erro ao finalizar o pedido. Tente novamente.';
-      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -220,9 +221,6 @@ export function CartAndCheckout() {
                   </SelectContent>
                 </Select>
               </div>
-
-              {error && <p className="text-sm text-red-500 mt-4">{error}</p>}
-              {success && <p className="text-sm text-green-500 mt-4">{success}</p>}
 
               <Button
                 className="w-full"

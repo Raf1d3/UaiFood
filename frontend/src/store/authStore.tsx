@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import api from "@/lib/api";
+import { toast } from "sonner";
+import { useCartStore } from './cartStore';
 
 interface User {
   id: string;
@@ -37,9 +39,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       await api.post("/logout");
     } catch (error) {
       console.error("Falha ao fazer logout no servidor:", error);
+      const errorMessage = err.response?.data?.error || 'Erro ao buscar endereços.';
+      toast.error(errorMessage);
     }
     localStorage.removeItem("uaifood-token");
     delete api.defaults.headers.common["Authorization"]; // Limpa o header do Axios
+    useCartStore.getState().clearCart();
+    localStorage.removeItem('uaifood-cart-storage');
     set({ token: null, user: null, isAuthenticated: false, isLoading: false });
   },
 
@@ -55,6 +61,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         })
         .catch(() => {
           localStorage.removeItem("uaifood-token");
+          localStorage.removeItem('uaifood-cart-storage'); 
+          useCartStore.getState().clearCart();
           delete api.defaults.headers.common["Authorization"];
           set({
             token: null,

@@ -92,7 +92,6 @@ export function ItemList() {
 
   // 2. Ordenação (NOVO)
   const sortedItems = useMemo(() => {
-    // Criamos uma cópia para não mutar o array original
     return [...filteredItems].sort((a, b) => {
       switch (sortOption) {
         case 'PRICE_ASC':
@@ -156,7 +155,7 @@ export function ItemList() {
   return (
     <div className="space-y-6 p-2">
       {/* --- Barra de Ferramentas --- */}
-<div className="flex flex-col md:flex-row gap-4 p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+<div className="flex flex-col md:flex-row gap-4 p-4 rounded-xl shadow-sm border">
         
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -164,7 +163,7 @@ export function ItemList() {
             placeholder="O que você procura hoje?" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-gray-50 border-gray-200 focus:bg-white transition-all duration-200"
+            className="pl-10 bg-gray-50 focus:bg-white transition-all duration-200"
           />
         </div>
         
@@ -172,7 +171,7 @@ export function ItemList() {
           
           {/* Filtro de Categoria */}
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[190px] bg-gray-50 border-gray-200 focus:bg-white">
+            <SelectTrigger className="w-[190px] bg-gray-50 focus:bg-white">
               <SelectValue placeholder="Categoria" />
             </SelectTrigger>
             <SelectContent>
@@ -185,7 +184,7 @@ export function ItemList() {
 
           {/* Filtro de Ordenação */}
           <Select value={sortOption} onValueChange={setSortOption}>
-            <SelectTrigger className="w-[180px] bg-gray-50 border-gray-200 focus:bg-white">
+            <SelectTrigger className="w-[180px] bg-gray-50  focus:bg-white">
               <ArrowUpDown className="mr-2 h-4 w-4 text-gray-500" />
               <SelectValue placeholder="Ordenar" />
             </SelectTrigger>
@@ -220,7 +219,7 @@ export function ItemList() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {paginatedItems.map((item) => (
-            <Card key={item.id} className="flex flex-col justify-between transition-all hover:shadow-md hover:border-red-200 group">
+            <Card key={item.id} className="flex flex-col justify-between transition-all hover:shadow-md group">
               <CardHeader>
                 <div className="flex justify-between items-start gap-2">
                   <CardTitle className="line-clamp-1" title={item.description}>
@@ -243,7 +242,7 @@ export function ItemList() {
               
               <CardFooter>
                 <Button 
-                  className="w-full bg-red-600 hover:bg-red-700 transition-all active:scale-95" 
+                  className="w-full transition-all active:scale-95" 
                   onClick={() => addItem({ ...item, unitPrice: parseFloat(item.unitPrice) })}
                 >
                   <ShoppingCart className="mr-2 h-4 w-4" /> 

@@ -13,9 +13,9 @@ export class AddressRepository {
         });
     }
 
-    async findAllByUserId(id: bigint): Promise<Address[]>{
+    async findAllByUserId(userId: bigint): Promise<Address[]>{
         return prisma.address.findMany({
-            where: { id },
+            where: { userId },
         });
     }
 

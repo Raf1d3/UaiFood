@@ -19,6 +19,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+import { toast } from "sonner"
+
 export function DeleteAccountSection() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
@@ -29,23 +31,23 @@ export function DeleteAccountSection() {
 
     try {
       setIsLoading(true);
-      // Chama a API: DELETE /users/:id
-      await api.delete(`/users/${user.id}`);
+      await api.delete(`/user/${user.id}`);
       
       // Logout forçado e redirecionamento
-      await logout(); // Limpa store e chama API de logout se existir
+      await logout();
+      toast.success("Sua conta foi excluída permanentemente.");
       router.push('/login');
       
     } catch (error) {
       console.error('Erro crítico ao deletar conta:', error);
-      // Feedback visual simples caso falhe (opcional, já que o console log foi pedido)
+      toast.error("Erro crítico ao deletar conta. Contate o suporte.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card className="border-red-100 bg-red-50/30">
+    <Card className="">
       <CardHeader>
         <div className="flex items-center gap-2 text-red-600">
           <AlertTriangle className="h-5 w-5" />
@@ -58,7 +60,7 @@ export function DeleteAccountSection() {
       <CardContent>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" disabled={isLoading}>
+            <Button disabled={isLoading} className='bg-red-600 hover:bg-red-600 focus:ring-red-600 dark:text-white'>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
               Deletar Minha Conta
             </Button>
@@ -76,7 +78,7 @@ export function DeleteAccountSection() {
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction 
                 onClick={handleDeleteAccount}
-                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                className="bg-red-600 hover:bg-red-600 focus:ring-red-600"
               >
                 {isLoading ? 'Deletando...' : 'Sim, deletar minha conta'}
               </AlertDialogAction>

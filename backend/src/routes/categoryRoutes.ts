@@ -10,18 +10,17 @@ import {
   categoryParamsSchema,
 } from "../schemas/category.schema.js";
 
-const categoryRouter = Router();
-const categoryRoutes = Router();
+const addressRouter = Router();
 
-categoryRoutes.get("/", CategoryController.findAll);
+addressRouter.get("/", CategoryController.findAll);
 
-categoryRoutes.get(
+addressRouter.get(
   "/:id",
   validate(categoryParamsSchema),
   CategoryController.findById
 );
 
-categoryRoutes.post(
+addressRouter.post(
   "/",
   authMiddleware,
   checkRole([UserType.ADMIN]),
@@ -29,7 +28,7 @@ categoryRoutes.post(
   CategoryController.create
 );
 
-categoryRoutes.put(
+addressRouter.put(
   "/:id",
   authMiddleware,
   checkRole([UserType.ADMIN]),
@@ -37,7 +36,7 @@ categoryRoutes.put(
   CategoryController.update
 );
 
-categoryRoutes.delete(
+addressRouter.delete(
   "/:id",
   authMiddleware,
   checkRole([UserType.ADMIN]),
@@ -150,4 +149,4 @@ categoryRoutes.delete(
  *         description: Conflito (Categoria em uso por itens)
  */
 
-export default categoryRouter;
+export default addressRouter;
