@@ -336,17 +336,6 @@
  *           type: string
  *           format: date-time
  *
- *     # --- Objeto de Resposta Categoria ---
- *     Category:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *           format: bigint
- *           example: "1"
- *         description:
- *           type: string
- *           example: "Bebidas"
  */
 
 /**
@@ -356,7 +345,10 @@
  *     # --- DTOs de Pedido ---
  *     CreateOrderDto:
  *       type: object
- *       required: [paymentMethod, addressId, items]
+ *       required:
+ *         - paymentMethod
+ *         - addressId
+ *         - items
  *       properties:
  *         paymentMethod:
  *           type: string
@@ -375,7 +367,9 @@
  *
  *     OrderItemDto:
  *       type: object
- *       required: [itemId, quantity]
+ *       required:
+ *         - itemId
+ *         - quantity
  *       properties:
  *         itemId:
  *           type: string
@@ -386,38 +380,78 @@
  *           format: integer
  *           minimum: 1
  *           example: 2
- * 
+ *
  *     UpdateOrderStatusDto:
  *       type: object
- *       required: [status]
+ *       required:
+ *         - status
  *       properties:
  *         status:
  *           type: string
  *           enum: [PENDING, PROCESSING, DELIVERED, CANCELED]
  *           example: "DELIVERED"
  *
- *     # --- Objeto de Resposta Order ---
  *     Order:
  *       type: object
  *       properties:
  *         id:
  *           type: string
  *           format: bigint
+ *           description: Id do pedido.
+ *           example: "100"
  *         paymentMethod:
  *           type: string
  *           enum: [CREDIT_CARD, DEBIT_CARD, PIX, CASH]
+ *           description: Método de pagamento.
+ *           example: "PIX"
  *         status:
  *           type: string
  *           enum: [PENDING, PROCESSING, DELIVERED, CANCELED]
+ *           description: Status do pedido.
+ *           example: "PENDING"
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Data de criação do registro.
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Data de modificação do registro.
  *         clientId:
  *           type: string
  *           format: bigint
- *         client:
- *           $ref: '#/components/schemas/User'
+ *           description: Id do cliente.
+ *           example: "1"
+ *         createdById:
+ *           type: string
+ *           format: bigint
+ *           description: Id de quem criou o pedido.
+ *           example: "1"
  *         items:
  *           type: array
+ *           description: Lista de itens do pedido.
  *           items:
  *             $ref: '#/components/schemas/OrderItemResponse'
+ *         client:
+ *           $ref: '#/components/schemas/ClientOrderResponse'
+ *
+ *     ClientOrderResponse:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: bigint
+ *           description: Id do cliente.
+ *           example: "1"
+ *         name:
+ *           type: string
+ *           description: Nome do cliente.
+ *           example: "Pedro Alves"
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: E-mail do cliente.
+ *           example: "pedro@email.com"
  *
  *     OrderItemResponse:
  *       type: object
@@ -425,17 +459,36 @@
  *         id:
  *           type: string
  *           format: bigint
+ *           description: Id do item do pedido.
+ *           example: "1"
  *         quantity:
  *           type: number
  *           format: integer
+ *           description: Quantidade do item.
+ *           example: 2
+ *         unitPrice:
+ *           type: number
+ *           format: float
+ *           description: Preço unitário do item.
+ *           example: 10.5
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Data de criação do registro.
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Data da última alteração do registro.
  *         orderId:
  *           type: string
  *           format: bigint
+ *           description: Id do pedido.
+ *           example: "100"
  *         itemId:
  *           type: string
  *           format: bigint
- *         item:
- *           $ref: '#/components/schemas/Item'
+ *           description: Id do item no catálogo.
+ *           example: "15"
  *
  *     StatusOrder:
  *       type: object
@@ -443,22 +496,27 @@
  *         id:
  *           type: string
  *           format: bigint
+ *           example: "100"
  *         paymentMethod:
  *           type: string
  *           enum: [CREDIT_CARD, DEBIT_CARD, PIX, CASH]
+ *           example: "PIX"
  *         status:
  *           type: string
  *           enum: [PENDING, PROCESSING, DELIVERED, CANCELED]
+ *           example: "DELIVERED"
  *         clientId:
  *           type: string
  *           format: bigint
+ *           example: "1"
  *         createdById:
  *           type: string
  *           format: bigint
+ *           example: "1"
  *         addressId:
  *           type: string
  *           format: bigint
- * 
+ *           example: "1"
  */
 
 /**
@@ -503,5 +561,39 @@
  *           type: string
  *           format: date-time
  *           description: Data da última atualização do registro.
+ *         _count:
+ *           type: object
+ *           properties:
+ *             items:
+ *               type: string
+ *               format: bigint
+ *               description: Quantidade de produtos relacionados.
+ * 
+ *     CrudCategory:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: bigint
+ *           description: ID único da categoria.
+ *           example: "1"
+ *         description:
+ *           type: string
+ *           example: "Bebidas"
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Data de criação do registro.
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Data da última atualização do registro.
+ *     DeleteCategory:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: "Categoria deletada com sucesso"
+ * 
  */
 

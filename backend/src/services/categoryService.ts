@@ -28,16 +28,23 @@ export class CategoryService {
       throw new Error("Categoria não encontrada.");
     }
 
-    if (data.description && data.description !== category.description) {
-      const existing = await this.categoryRepository.findByDescription(
-        data.description as string
-      );
-      if (existing) {
-        throw new Error("Uma categoria com esta descrição já existe.");
+    const dataToUpdate: Prisma.CategoryUpdateInput = {};
+
+if (data.description) {
+      
+    if (data.description !== category.description) {
+        const existing = await this.categoryRepository.findByDescription(
+          data.description
+        );
+        if (existing) {
+          throw new Error("Uma categoria com esta descrição já existe.");
+        }
       }
+
+      dataToUpdate.description = data.description;
     }
 
-    return this.categoryRepository.update(id, data.description as Prisma.CategoryUpdateInput);
+    return this.categoryRepository.update(id, dataToUpdate);
   }
 
   async delete(id: bigint): Promise<{ message: string }> {

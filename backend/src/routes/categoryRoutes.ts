@@ -53,6 +53,11 @@ addressRouter.delete(
  *     responses:
  *       '200':
  *         description: Lista de categorias
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Category'
+ * 
  */
 
 /**
@@ -70,6 +75,10 @@ addressRouter.delete(
  *     responses:
  *       '200':
  *         description: Detalhes da categoria
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CrudCategory'
  *       '404':
  *         description: Categoria não encontrada
  */
@@ -93,7 +102,7 @@ addressRouter.delete(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/UpdateCategoryDto'
+ *             $ref: '#/components/schemas/CrudCategory'
  *     responses:
  *       '200':
  *         description: Categoria atualizada
@@ -118,6 +127,10 @@ addressRouter.delete(
  *     responses:
  *       '201':
  *         description: Categoria criada
+ *         content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/CrudCategory'
  *       '401':
  *         description: Não autorizado
  *       '403':
@@ -143,6 +156,10 @@ addressRouter.delete(
  *     responses:
  *       '200':
  *         description: Categoria deletada
+ *         content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/DeleteCategory'
  *       '404':
  *         description: Categoria não encontrada
  *       '409':

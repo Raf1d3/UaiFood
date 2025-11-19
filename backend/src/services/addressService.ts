@@ -9,12 +9,13 @@ export class AddressService {
   private userRepository = new UserRepository();
 
   async create(userId: bigint, data: CreateAddressDto, authenticatedUser: IAuthenticatedUser): Promise<Address> {
+    const userAuth = await this.userRepository.findById(authenticatedUser.id);
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new Error("Usuário não encontrado. Impossível criar endereço.");
     }
 
-    if(user.userType === UserType.CLIENT && user.id !== authenticatedUser.id) {
+    if(userAuth?.userType === UserType.CLIENT && user.id !== authenticatedUser.id) {
       throw new Error("Acesso negado. Você só pode criar endereços para você mesmo.");
     }
 

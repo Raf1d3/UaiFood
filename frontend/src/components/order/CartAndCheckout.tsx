@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { AddressFormModal } from './AddressFormModal';
 import { Address } from '@/types';  
 import { toast } from "sonner"
+import { getErrorMessage } from '@/lib/utils';
 
 export function CartAndCheckout() {
   const { items, total, updateQuantity, removeItem, clearCart } = useCartStore();
@@ -45,8 +46,9 @@ export function CartAndCheckout() {
       }
     } catch (err) {
       console.error('Erro ao buscar endereços:', err);
-      const errorMessage = err.response?.data?.error || 'Erro ao buscar endereços.';
-      toast.error(errorMessage);
+      const message = getErrorMessage(err);
+      //const errorMessage = err.response?.data?.error || 'Erro ao buscar endereços.';
+      toast.error(message);
     }
   };
 

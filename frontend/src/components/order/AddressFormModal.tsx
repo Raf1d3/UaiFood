@@ -20,6 +20,7 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
+import { getErrorMessage } from '@/lib/utils';
 
 interface AddressFormModalProps {
   onSuccess: () => void;
@@ -96,9 +97,11 @@ export function AddressFormModal({ onSuccess, addressToEdit, targetUserId }: Add
       setIsOpen(false);
       onSuccess(); // Recarrega a lista pai
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Erro ao salvar endereço.';
       console.error('Erro ao salvar endereço:', err);
-      toast.error(errorMessage);
+      const message = getErrorMessage(err);
+      //const errorMessage = err.response?.data?.error || 'Erro ao salvar endereço.';
+      console.error('Erro ao salvar endereço:', err);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

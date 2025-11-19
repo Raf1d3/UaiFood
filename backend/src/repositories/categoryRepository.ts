@@ -5,7 +5,14 @@ import type { Prisma, Category } from "@prisma/client";
 
 export class CategoryRepository {
     async findAll(): Promise<Category[]> {
-        return prisma.category.findMany();
+        return prisma.category.findMany({
+      orderBy: { description: 'asc' },
+      include: {
+        _count: {
+          select: { items: true }
+        }
+      }
+    });
     }
 
     async findById(id: bigint): Promise<Category | null> {

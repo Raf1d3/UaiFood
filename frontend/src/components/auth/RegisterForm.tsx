@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getErrorMessage } from '@/lib/utils';
 
 export function RegisterForm() {
   // Estados para todos os campos do formulário
@@ -60,11 +61,12 @@ export function RegisterForm() {
         router.push('/login');
       }, 2000); // Aguarda 2s para o usuário ler a mensagem
 
-    } catch (err: any) {
+    } catch (error: any) {
       // 4. Tratamento de Erro
       // (Pega o erro do Zod ou do Service, ex: "Email já em uso")
-      const errorMessage = err.response?.data?.error || 'Erro ao criar conta. Tente novamente.';
-      setError(errorMessage);
+      console.error(error);
+      const message = getErrorMessage(error);
+      setError(message);
     } finally {
       setIsLoading(false);
     }

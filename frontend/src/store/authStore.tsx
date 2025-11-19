@@ -2,6 +2,7 @@ import { create } from "zustand";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { useCartStore } from './cartStore';
+import { getErrorMessage } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -39,8 +40,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       await api.post("/logout");
     } catch (error) {
       console.error("Falha ao fazer logout no servidor:", error);
-      const errorMessage = err.response?.data?.error || 'Erro ao buscar endereços.';
-      toast.error(errorMessage);
+      const message = getErrorMessage(error);
+      //const errorMessage = err.response?.data?.error || 'Erro ao buscar endereços.';
+      toast.error(message);
     }
     localStorage.removeItem("uaifood-token");
     delete api.defaults.headers.common["Authorization"]; // Limpa o header do Axios
